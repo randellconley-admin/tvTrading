@@ -1,0 +1,39 @@
+
+# Trading Automation Platform Dependencies
+# Multi-team coordinated technology stack
+
+# Core Flask Framework (Backend Team)
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-CORS==4.0.0
+
+# Trading & Financial APIs (Trading Analytics Team)
+alpaca-trade-api==3.1.1
+mplfinance==0.12.10b0
+plotly==5.17.0
+TA-Lib==0.4.28
+
+# Data Processing (Trading Analytics Team)
+pandas==2.1.3
+numpy==1.25.2
+scipy==1.11.4
+
+# Database & Caching (Backend Team)
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+redis==5.0.1
+
+# Async Processing (Backend Team)
+celery==5.3.4
+
+# AWS Integration (DevOps Team)
+opensearch-py==2.4.0
+boto3==1.34.0
+
+# Development & Testing (DevOps Team)
+pytest==7.4.3
+pytest-flask==1.3.0
+python-dotenv==1.0.0
+
+# Monitoring & Logging (DevOps Team)
+gunicorn==21.2.0
