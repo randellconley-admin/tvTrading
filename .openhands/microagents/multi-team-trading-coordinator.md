@@ -3,7 +3,7 @@ name: Multi-Team Trading Coordinator
 type: knowledge
 version: 1.0.0
 agent: CodeActAgent
-triggers: ["Team:", "team:", "TEAM:"]
+triggers: ["Team:", "team:", "TEAM:", "Teams:", "teams:", "TEAMS:"]
 ---
 
 # Multi-Team Trading Coordinator Microagent
