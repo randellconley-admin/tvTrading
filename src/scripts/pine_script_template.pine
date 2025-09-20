@@ -1,0 +1,150 @@
+
+
+//@version=5
+strategy("Multi-Ticker Trading Automation", overlay=true, max_bars_back=1000)
+
+// ============================================================================
+// TRADING AUTOMATION PLATFORM - PINE SCRIPT TEMPLATE
+// Multi-Team Coordination: Trading Analytics Team + Backend Team
+// ============================================================================
+
+// Input Parameters - User Configurable
+trading_mode = input.string("Paper", "Trading Mode", options=["Paper", "Production"], 
+    tooltip="Select Paper for testing or Production for live trading")
+risk_amount = input.float(100.0, "Risk Amount ($)", minval=1.0, maxval=10000.0,
+    tooltip="Fixed dollar amount to risk per trade")
+webhook_url = input.string("https://your-domain.com/webhook", "Webhook URL",
+    tooltip="Your Flask application webhook endpoint")
+
+// Strategy Parameters
+rsi_period = input.int(14, "RSI Period", minval=2, maxval=50)
+rsi_oversold = input.int(30, "RSI Oversold Level", minval=10, maxval=40)
+rsi_overbought = input.int(70, "RSI Overbought Level", minval=60, maxval=90)
+
+ma_fast = input.int(10, "Fast MA Period", minval=5, maxval=50)
+ma_slow = input.int(20, "Slow MA Period", minval=10, maxval=100)
+
+// Ticker Groups - Maximum 40 tickers per script (TradingView limitation)
+// This template handles Group 1 of NYSE tickers
+ticker_group = "Group_1_NYSE"
+tickers = array.from(
+    "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "META", "NVDA", "JPM", "JNJ", "V",
+    "PG", "UNH", "HD", "MA", "BAC", "ABBV", "ADBE", "CRM", "KO", "MRK",
+    "COST", "LLY", "ACN", "TMO", "ABT", "AVGO", "TXN", "XOM", "NKE", "DHR",
+    "VZ", "ORCL", "WMT", "CVX", "PFE", "NFLX", "INTC", "CMCSA", "COP", "AMD"
+)
+
+// Technical Indicators
+rsi = ta.rsi(close, rsi_period)
+ma_fast_val = ta.sma(close, ma_fast)
+ma_slow_val = ta.sma(close, ma_slow)
+
+// Trading Logic - Coordinated by Trading Analytics Team
+buy_condition = ta.crossover(ma_fast_val, ma_slow_val) and rsi < rsi_overbought
+sell_condition = ta.crossunder(ma_fast_val, ma_slow_val) and rsi > rsi_oversold
+
+// Position Sizing Logic (will be refined by Flask backend)
+atr_value = ta.atr(14)
+stop_loss_distance = atr_value * 2
+take_profit_distance = atr_value * 3
+
+// Calculate stop loss and take profit levels
+var float entry_price = na
+var float stop_loss_price = na
+var float take_profit_price = na
+
+if buy_condition
+    entry_price := close
+    stop_loss_price := close - stop_loss_distance
+    take_profit_price := close + take_profit_distance
+
+if sell_condition
+    entry_price := close
+    stop_loss_price := close + stop_loss_distance
+    take_profit_price := close - take_profit_distance
+
+// JSON Payload Builder - Backend Team Integration
+build_webhook_payload(signal_type, ticker) =>
+    timestamp = str.format("{0,date,yyyy-MM-dd}T{0,time,HH:mm:ss}Z", timenow)
+    
+    payload = '{'
+    payload += '"signal":"' + signal_type + '",'
+    payload += '"ticker":"' + ticker + '",'
+    payload += '"tradingMode":"' + trading_mode + '",'
+    payload += '"riskAmount":' + str.tostring(risk_amount) + ','
+    payload += '"entryPrice":' + str.tostring(entry_price) + ','
+    payload += '"stopLoss":' + str.tostring(stop_loss_price) + ','
+    payload += '"takeProfit":' + str.tostring(take_profit_price) + ','
+    payload += '"strategy":"multi_ticker_momentum",'
+    payload += '"timeframe":"' + timeframe.period + '",'
+    payload += '"timestamp":"' + timestamp + '",'
+    payload += '"tickerGroup":"' + ticker_group + '",'
+    payload += '"rsi":' + str.tostring(rsi) + ','
+    payload += '"atr":' + str.tostring(atr_value)
+    payload += '}'
+    
+    payload
+
+// Multi-Ticker Signal Generation
+// Note: This template monitors current chart ticker
+// For full multi-ticker support, use request.security() for each ticker in the array
+
+if buy_condition and barstate.isconfirmed
+    payload = build_webhook_payload("BUY", syminfo.ticker)
+    alert(payload, alert.freq_once_per_bar)
+    strategy.entry("Long", strategy.long)
+    
+    // Visual indicators on chart
+    label.new(bar_index, low, "BUY\n" + syminfo.ticker, 
+        color=color.green, style=label.style_label_up, size=size.small)
+
+if sell_condition and barstate.isconfirmed
+    payload = build_webhook_payload("SELL", syminfo.ticker)
+    alert(payload, alert.freq_once_per_bar)
+    strategy.entry("Short", strategy.short)
+    
+    // Visual indicators on chart
+    label.new(bar_index, high, "SELL\n" + syminfo.ticker, 
+        color=color.red, style=label.style_label_down, size=size.small)
+
+// Exit conditions
+strategy.exit("Exit Long", "Long", stop=stop_loss_price, limit=take_profit_price)
+strategy.exit("Exit Short", "Short", stop=stop_loss_price, limit=take_profit_price)
+
+// Plot indicators for visual confirmation
+plot(ma_fast_val, "Fast MA", color=color.blue, linewidth=1)
+plot(ma_slow_val, "Slow MA", color=color.red, linewidth=1)
+
+// RSI subplot
+hline(rsi_overbought, "Overbought", color=color.red, linestyle=hline.style_dashed)
+hline(rsi_oversold, "Oversold", color=color.green, linestyle=hline.style_dashed)
+plot(rsi, "RSI", color=color.purple)
+
+// ============================================================================
+// DEPLOYMENT INSTRUCTIONS FOR TRADING TEAMS:
+// 
+// 1. Copy this script to TradingView Pine Editor
+// 2. Modify the 'tickers' array for your specific ticker group (max 40)
+// 3. Update 'webhook_url' to point to your Flask application
+// 4. Configure 'trading_mode' (Paper for testing, Production for live)
+// 5. Set appropriate 'risk_amount' for position sizing
+// 6. Create alert using this script with webhook notification
+// 7. Set alert message to {{strategy.order.alert_message}}
+// 8. Repeat for each ticker group (60 scripts total for full NYSE coverage)
+//
+// WEBHOOK PAYLOAD EXAMPLE:
+// {
+//   "signal": "BUY",
+//   "ticker": "AAPL", 
+//   "tradingMode": "Paper",
+//   "riskAmount": 100.0,
+//   "entryPrice": 150.25,
+//   "stopLoss": 148.50,
+//   "takeProfit": 155.00,
+//   "strategy": "multi_ticker_momentum",
+//   "timeframe": "5m",
+//   "timestamp": "2024-01-01T12:00:00Z"
+// }
+// ============================================================================
+
+
