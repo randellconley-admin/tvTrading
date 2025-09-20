@@ -19,6 +19,29 @@ The Multi-Team Trading Coordinator is designed to orchestrate and manage multipl
   - Plotly (interactive financial charts)
   - TA-Lib (Technical Analysis Library)
 
+## Team Router with Communication Output
+
+The coordinator includes a sophisticated routing system that shows real-time communication between agents and teams:
+
+### Router Features
+- **Message Routing**: Routes tasks and communications between teams
+- **Real-time Output**: Shows all inter-team communications with timestamps
+- **Task Assignment**: Automatically assigns tasks based on requirements analysis
+- **Status Monitoring**: Tracks team status and project progress
+- **Coordination Events**: Manages cross-team collaboration
+
+### Communication Flow
+```
+[12:34:56.789] 🎯 ROUTER: Multi-Team Trading Router initialized
+[12:34:56.790] 👥 ROUTER: Teams ready - Frontend, Backend, Trading Analytics, DevOps
+[12:34:56.791] 🚀 COORDINATOR: Starting project 'TradingPlatform_v1'
+[12:34:56.792] 🔍 COORDINATOR: Analyzing requirement - 'Create trading dashboard UI'
+[12:34:56.793] 🎯 COORDINATOR: Assigning to frontend team
+[12:34:56.794] 📡 ROUTER: coordinator → frontend (task_assignment): New task for project
+[12:34:56.795] 📨 FRONTEND received: New task for project 'TradingPlatform_v1'
+[12:34:56.796] 🎨 FRONTEND: Starting UI development for 'Create trading dashboard UI'
+```
+
 ## Team Capabilities
 
 ### Full-Stack Development Team
@@ -100,22 +123,51 @@ import numpy as np
 - Implement proper caching strategies
 - Monitor system performance and scalability
 
+## Team Coordination Patterns
+
+### Message-Based Communication
+Teams communicate through a centralized router that handles task assignment, status updates, and coordination:
+
+```python
+# Team communication example
+class TeamRouter:
+    def route_task(self, requirement, project):
+        if "chart" in requirement.lower():
+            return "trading_analytics"  # mplfinance, Plotly, TA-Lib
+        elif "api" in requirement.lower():
+            return "backend"           # FastAPI, Django
+        elif "ui" in requirement.lower():
+            return "frontend"          # React, Vue, Angular
+        else:
+            return "devops"            # Deployment, Infrastructure
+```
+
+### Real-Time Coordination
+The router provides live output showing team interactions:
+- Task assignments with automatic team selection
+- Progress updates from each specialized team
+- Cross-team coordination for complex features
+- Resource sharing and dependency management
+
 ## Integration Patterns
 
 ### Team Communication
 - Use standardized APIs between team components
 - Implement event-driven architecture for real-time updates
 - Maintain clear documentation and interface contracts
+- Router-based message passing between teams
 
 ### Data Flow
-- Centralized market data distribution
+- Centralized market data distribution via Redis
 - Consistent data models across all teams
 - Real-time synchronization of trading positions
+- Shared data repositories for team collaboration
 
 ### Monitoring and Alerting
 - Comprehensive logging across all systems
 - Real-time monitoring of trading operations
 - Automated alerting for system issues and trading anomalies
+- Team status tracking and progress monitoring
 
 ## Error Handling and Limitations
 
